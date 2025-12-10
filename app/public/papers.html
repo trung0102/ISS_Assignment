@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Hệ thống Bài báo Khoa học</title>
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            margin: 30px;
+            background: #fff;
+            color: #333;
+        }
+
+        header {
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav a {
+            margin-left: 15px;
+            text-decoration: none;
+            color: #000;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        th {
+            background: #f8f9fa;
+            border-bottom: 2px solid #000;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 13px;
+        }
+
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        /* --- TRẠNG THÁI BADGE (Cập nhật màu Camera-ready) --- */
+        .badge {
+            padding: 5px 10px;
+            font-size: 11px;
+            font-weight: bold;
+            border-radius: 4px;
+            display: inline-block;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .st-submitting {
+            background: #e2e3e5;
+            color: #383d41;
+            border: 1px solid #d6d8db;
+        }
+
+        .st-reviewing {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+
+        .st-revision {
+            background: #cce5ff;
+            color: #004085;
+            border: 1px solid #b8daff;
+        }
+
+        .st-reviewed {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .st-camera-ready {
+            background: #e0cffc;
+            color: #4a00e0;
+            border: 1px solid #cbb2fa;
+        }
+
+        /* Màu tím cho bản in */
+
+        /* Buttons */
+        .btn {
+            padding: 6px 12px;
+            font-size: 13px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            margin-right: 5px;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 500;
+        }
+
+        .btn-view {
+            background: #fff;
+            border-color: #ccc;
+            color: #333;
+        }
+
+        .btn-action {
+            background: #000;
+            color: #fff;
+        }
+
+        .btn-action:hover {
+            background: #333;
+        }
+
+        .btn-disabled {
+            background: #eee;
+            color: #999;
+            cursor: not-allowed;
+            border: 1px solid #ddd;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+        }
+
+        .modal-box {
+            background: #fff;
+            padding: 30px;
+            width: 450px;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-head {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+        }
+
+        .form-row {
+            margin-bottom: 15px;
+        }
+
+        .form-row label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-row input,
+        .form-row select,
+        .form-row textarea {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .modal-foot {
+            text-align: right;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div>
+            <h1 style="margin:0; font-size:22px;">QUẢN LÝ BÀI BÁO</h1>
+            <small style="color:#666;">Hệ thống phân quyền VPD/OLS</small>
+        </div>
+        <div class="nav">
+            <span id="user-display"
+                style="background:#eee; padding:5px 10px; border-radius:20px; font-size:13px;">Loading...</span>
+            <a href="papers.html" style="text-decoration:underline;">Danh sách Bài</a>
+            <a href="reviews.html">Xem Đánh giá</a>
+            <a href="login.html" style="color:#d9534f;">Đăng xuất</a>
+        </div>
+    </header>
+
+    <div id="loading" style="text-align:center; padding:20px;">Đang tải dữ liệu...</div>
+    <table id="tbl" style="display:none;">
+        <thead>
+            <tr>
+                <th width="60">ID</th>
+                <th>Tiêu đề Bài báo</th>
+                <th width="140">Trạng thái</th>
+                <th width="250">Chức năng</th>
+            </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+    </table>
+
+    <div id="modalAuthor" class="modal">
+        <div class="modal-box">
+            <div class="modal-head">CHỈNH SỬA BÀI BÁO</div>
+            <div class="form-row"><label>ID Bài báo:</label><strong id="auId">...</strong></div>
+            <div class="form-row">
+                <label>Tiêu đề mới:</label>
+                <input type="text" id="auTitle" placeholder="Nhập tiêu đề mới...">
+            </div>
+            <div class="modal-foot">
+                <button class="btn btn-view" onclick="closeModal('modalAuthor')">Hủy bỏ</button>
+                <button class="btn btn-action" onclick="apiSubmitAuthor()">Lưu Thay Đổi</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalReview" class="modal">
+        <div class="modal-box">
+            <div class="modal-head">CHẤM ĐIỂM BÀI BÁO</div>
+            <div class="form-row"><label>Bài báo:</label><strong id="rvPaperTitle">...</strong></div>
+            <div class="form-row">
+                <label>Điểm số (0-10):</label>
+                <input type="number" id="rvScore" min="0" max="10" placeholder="VD: 8.5">
+            </div>
+            <div class="form-row">
+                <label>Nhận xét chi tiết:</label>
+                <textarea id="rvComment" rows="4" placeholder="Nhận xét điểm mạnh, điểm yếu..."></textarea>
+            </div>
+            <div class="modal-foot">
+                <button class="btn btn-view" onclick="closeModal('modalReview')">Hủy bỏ</button>
+                <button class="btn btn-action" onclick="apiSubmitReview()">Gửi Kết Quả</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalEditor" class="modal">
+        <div class="modal-box">
+            <div class="modal-head">CẬP NHẬT TRẠNG THÁI</div>
+            <div class="form-row"><label>Bài báo:</label><strong id="edPaperTitle">...</strong></div>
+            <div class="form-row">
+                <label>Trạng thái tiếp theo:</label>
+                <select id="edStatus">
+                    <option value="Submitting">Submitting (Mới nộp)</option>
+                    <option value="Reviewing">Reviewing (Đang chấm)</option>
+                    <option value="Camera-ready">Camera-ready (Nộp bản in)</option>
+                    <option value="Reviewed">Reviewed (Đã công bố)</option>
+                </select>
+            </div>
+            <div class="modal-foot">
+                <button class="btn btn-view" onclick="closeModal('modalEditor')">Hủy</button>
+                <button class="btn btn-action" onclick="apiUpdateStatus()">Cập nhật</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let myRole = '';
+        let selectedId = null;
+
+        async function init() {
+            try {
+                const res = await fetch('/api/whoami');
+                const user = await res.json();
+                myRole = user.role;
+                document.getElementById('user-display').innerText = `User: ${user.id} | Role: ${myRole}`;
+                loadPapers();
+            } catch (e) { alert('Lỗi tải User info'); }
+        }
+
+        async function loadPapers() {
+            const res = await fetch('/api/papers');
+            const list = await res.json();
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('tbl').style.display = 'table';
+            const tbody = document.getElementById('tbody');
+            tbody.innerHTML = '';
+
+            if (list.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" align="center" style="padding:20px;">Không có bài báo nào (Hoặc bị ẩn bởi VPD)</td></tr>';
+                return;
+            }
+
+            list.forEach(p => {
+                // Xử lý Badge (Nhãn trạng thái)
+                let badgeClass = 'st-submitting';
+                if (p.PAPER_STATUS === 'Reviewing') badgeClass = 'st-reviewing';
+                if (p.PAPER_STATUS === 'Revision') badgeClass = 'st-revision';
+                if (p.PAPER_STATUS === 'Reviewed') badgeClass = 'st-reviewed';
+                if (p.PAPER_STATUS === 'Camera-ready') badgeClass = 'st-camera-ready'; // Màu tím
+
+                // Nút Chi tiết (Ai cũng thấy)
+                let actions = `<a href="paper_detail.html?id=${p.PAPER_ID}" class="btn btn-view">Chi tiết</a>`;
+
+                // === LOGIC HIỂN THỊ NÚT THEO ROLE ===
+
+                // 1. EDITOR: Quyền lực nhất, thấy nút đổi trạng thái ở mọi bài
+                if (myRole === 'EDITOR') {
+                    actions += `<button class="btn btn-action" onclick="openEditor(${p.PAPER_ID}, '${p.TITLE}', '${p.PAPER_STATUS}')">Trạng thái</button>`;
+                }
+
+                // 2. REVIEWER: Chỉ thấy nút Chấm điểm khi trạng thái là 'Reviewing'
+                else if (myRole === 'REVIEWER') {
+                    if (p.PAPER_STATUS === 'Reviewing') {
+                        actions += `<button class="btn btn-action" onclick="openReview(${p.PAPER_ID}, '${p.TITLE}')">Chấm điểm</button>`;
+                    } else {
+                        // Hiện nút xám (disabled) để biết là không được chấm
+                        actions += `<button class="btn btn-disabled" title="Chỉ chấm được khi đang Reviewing" disabled>Chấm điểm</button>`;
+                    }
+                }
+
+                // 3. AUTHOR: Được Sửa khi bài là 'Submitting' hoặc 'Camera-ready'
+                else if (myRole === 'AUTHOR') {
+                    if (p.PAPER_STATUS === 'Submitting' || p.PAPER_STATUS === 'Camera-ready') {
+                        let btnText = (p.PAPER_STATUS === 'Camera-ready') ? "Nộp bản in" : "Sửa bài";
+
+                        actions += `<button class="btn btn-action" onclick="openAuthor(${p.PAPER_ID}, '${p.TITLE}')">${btnText}</button>`;
+                    } else {
+                        actions += `<span style="font-size:12px; color:#999; margin-left:5px;">(Đang khóa)</span>`;
+                    }
+                }
+
+                tbody.innerHTML += `
+                <tr>
+                    <td>#${p.PAPER_ID}</td>
+                    <td><b>${p.TITLE}</b></td>
+                    <td><span class="badge ${badgeClass}">${p.PAPER_STATUS}</span></td>
+                    <td>${actions}</td>
+                </tr>
+            `;
+            });
+        }
+
+        // --- XỬ LÝ AUTHOR ---
+        function openAuthor(id, title) {
+            selectedId = id;
+            document.getElementById('auId').innerText = "#" + id;
+            document.getElementById('auTitle').value = title;
+            document.getElementById('modalAuthor').style.display = 'flex';
+        }
+        async function apiSubmitAuthor() {
+            const title = document.getElementById('auTitle').value;
+            const res = await postData('/api/papers/edit', { paper_id: selectedId, new_title: title });
+            if (res.success) { alert('Cập nhật thành công!'); closeModal('modalAuthor'); loadPapers(); }
+        }
+
+        // --- XỬ LÝ REVIEWER ---
+        function openReview(id, title) {
+            selectedId = id;
+            document.getElementById('rvPaperTitle').innerText = title;
+            document.getElementById('rvScore').value = '';
+            document.getElementById('rvComment').value = '';
+            document.getElementById('modalReview').style.display = 'flex';
+        }
+        async function apiSubmitReview() {
+            const score = document.getElementById('rvScore').value;
+            const comment = document.getElementById('rvComment').value;
+            const res = await postData('/api/reviews/submit', { paper_id: selectedId, score: score, content: comment });
+            if (res.success) { alert('Đã lưu kết quả chấm!'); closeModal('modalReview'); }
+        }
+
+        // --- XỬ LÝ EDITOR ---
+        function openEditor(id, title, status) {
+            selectedId = id;
+            document.getElementById('edPaperTitle').innerText = title;
+            document.getElementById('edStatus').value = status;
+            document.getElementById('modalEditor').style.display = 'flex';
+        }
+        async function apiUpdateStatus() {
+            const st = document.getElementById('edStatus').value;
+            const res = await postData('/api/papers/update', { paper_id: selectedId, status: st });
+            if (res.success) { alert('Cập nhật trạng thái xong!'); closeModal('modalEditor'); loadPapers(); }
+        }
+
+        // UTILS
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        async function postData(url, data) {
+            try {
+                const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                const json = await res.json();
+                if (!json.success) { alert('LỖI: ' + json.message); return { success: false }; }
+                return json;
+            } catch (e) { alert('Lỗi kết nối Server'); return { success: false }; }
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

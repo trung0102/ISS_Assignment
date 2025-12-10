@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Đăng nhập Hệ thống</title>
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .login-card {
+            background: #fff;
+            padding: 40px;
+            width: 380px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        h2 {
+            margin-bottom: 20px;
+            color: #1a1a1a;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #000;
+            display: inline-block;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: 600;
+            font-size: 14px;
+            color: #555;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+            background: #fafafa;
+            cursor: pointer;
+        }
+
+        select:focus {
+            border-color: #000;
+            outline: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #000;
+            color: #fff;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #333;
+            transform: translateY(-1px);
+        }
+
+        .loading {
+            font-size: 13px;
+            color: #888;
+            font-style: italic;
+        }
+
+        .error {
+            color: red;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="login-card">
+        <h2>Cổng Đăng Nhập</h2>
+
+        <form action="/login" method="POST" id="loginForm">
+            <div class="form-group">
+                <label for="userSelect">Chọn tài khoản:</label>
+                <select name="user_id" id="userSelect" required>
+                    <option value="" disabled selected>-- Đang tải danh sách user... --</option>
+                </select>
+                <div id="statusMsg" class="loading"></div>
+            </div>
+            <button type="submit" id="btnLogin" disabled>ĐĂNG NHẬP NGAY</button>
+        </form>
+    </div>
+
+    <script>
+        // Hàm tự động chạy khi mở trang
+        async function loadUsers() {
+            const selectBox = document.getElementById('userSelect');
+            const btn = document.getElementById('btnLogin');
+            const status = document.getElementById('statusMsg');
+
+            try {
+                // Gọi API server
+                const res = await fetch('/api/users-list');
+                if (!res.ok) throw new Error("Không kết nối được Server");
+
+                const users = await res.json();
+
+                // Xóa option cũ
+                selectBox.innerHTML = '<option value="" disabled selected>-- Chọn Người dùng để Test --</option>';
+
+                // Gom nhóm theo Role để hiển thị cho đẹp
+                const groups = {
+                    'CHAIR': document.createElement('optgroup'),
+                    'EDITOR': document.createElement('optgroup'),
+                    'REVIEWER': document.createElement('optgroup'),
+                    'AUTHOR': document.createElement('optgroup')
+                };
+
+                // Đặt nhãn tiếng Việt
+                groups['CHAIR'].label = "BAN QUẢN TRỊ (CHAIR)";
+                groups['EDITOR'].label = "BAN BIÊN TẬP (EDITOR)";
+                groups['REVIEWER'].label = "HỘI ĐỒNG PHẢN BIỆN (REVIEWER)";
+                groups['AUTHOR'].label = "TÁC GIẢ (AUTHOR)";
+
+                // Duyệt qua danh sách user và đưa vào nhóm tương ứng
+                users.forEach(u => {
+                    const option = document.createElement('option');
+                    option.value = u.USER_ID;
+                    option.text = `ID ${u.USER_ID} - ${u.FULLNAME}`;
+
+                    if (groups[u.ROLE]) {
+                        groups[u.ROLE].appendChild(option);
+                    }
+                });
+
+                // Append các nhóm vào select box
+                selectBox.appendChild(groups['CHAIR']);
+                selectBox.appendChild(groups['EDITOR']);
+                selectBox.appendChild(groups['REVIEWER']);
+                selectBox.appendChild(groups['AUTHOR']);
+
+                // Mở khóa nút đăng nhập
+                btn.disabled = false;
+                status.innerText = "";
+
+            } catch (e) {
+                status.className = "error";
+                status.innerText = "Lỗi tải danh sách User. Hãy đảm bảo Server đang chạy.";
+                selectBox.innerHTML = '<option>Lỗi kết nối!</option>';
+                console.error(e);
+            }
+        }
+
+        loadUsers();
+    </script>
+</body>
+
+</html>

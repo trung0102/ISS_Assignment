@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Chi tiết</title>
+    <style>
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            margin: 40px;
+            background: #fff;
+            color: #333;
+        }
+
+        .box {
+            max-width: 800px;
+            margin: 0 auto;
+            border: 1px solid #000;
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 20px;
+            text-transform: uppercase;
+            font-size: 22px;
+        }
+
+        .row {
+            margin-bottom: 20px;
+        }
+
+        .lbl {
+            font-weight: bold;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #666;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .val {
+            background: #f5f5f5;
+            padding: 15px;
+            border: 1px solid #ddd;
+        }
+
+        a {
+            text-decoration: none;
+            color: #000;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <a href="papers.html">← Quay lại</a>
+    <div class="box">
+        <h1>Chi tiết Bài báo</h1>
+        <div class="row"><span class="lbl">ID Bài báo</span>
+            <div class="val" id="pid">...</div>
+        </div>
+        <div class="row"><span class="lbl">Thông tin bảo mật</span>
+            <div class="val">Dữ liệu hiển thị tại đây tuân thủ chính sách VPD/OLS.</div>
+        </div>
+    </div>
+    <script>
+        const p = new URLSearchParams(location.search).get('id');
+        if (p) document.getElementById('pid').innerText = "#" + p;
+    </script>
+</body>
+
+</html>

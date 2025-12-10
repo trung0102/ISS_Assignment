@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Kết quả Đánh giá</title>
+    <style>
+        body {
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            margin: 40px;
+            background: #fff;
+            color: #333;
+        }
+
+        header {
+            border-bottom: 2px solid #000;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 24px;
+            text-transform: uppercase;
+        }
+
+        .nav a {
+            margin-left: 20px;
+            text-decoration: none;
+            color: #000;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .nav a.logout {
+            color: #cc0000;
+        }
+
+        .card {
+            border: 1px solid #ccc;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #f9f9f9;
+        }
+
+        .meta {
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .score {
+            float: right;
+            font-size: 16px;
+            font-weight: bold;
+            color: #000;
+        }
+
+        .comment {
+            white-space: pre-wrap;
+            line-height: 1.5;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            border: 1px dashed #999;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Báo cáo Phản biện</h1>
+        <div class="nav">
+            <a href="papers.html">Danh sách Bài</a>
+            <a href="reviews.html" style="text-decoration:underline;">Kết quả Đánh giá</a>
+            <a href="login.html" class="logout">Đăng xuất</a>
+        </div>
+    </header>
+
+    <div id="cont">Đang tải dữ liệu...</div>
+
+    <script>
+        fetch('/api/reviews')
+            .then(r => r.json())
+            .then(data => {
+                const c = document.getElementById('cont');
+                c.innerHTML = '';
+
+                if (data.length === 0) {
+                    c.innerHTML = `
+                        <div class="no-data">
+                            <strong>KHÔNG CÓ DỮ LIỆU HIỂN THỊ</strong><br><br>
+                            Nguyên nhân do Chính sách Bảo mật VPD:<br>
+                            - Nếu bạn là Tác giả: Bài báo chưa được công bố kết quả.<br>
+                            - Nếu bạn là Reviewer: Bạn chưa được phân công bài nào.<br>
+                        </div>`;
+                    return;
+                }
+
+                data.forEach(item => {
+                    // Dữ liệu từ Oracle: PAPER_ID, USER_ID, SCORE, COMMENT_TEXT
+                    c.innerHTML += `
+                    <div class="card">
+                        <div class="meta">
+                            BÀI BÁO ID: #${item.PAPER_ID} 
+                            | NGƯỜI CHẤM: #${item.USER_ID} 
+                            <span class="score">ĐIỂM: ${item.SCORE}/10</span>
+                        </div>
+                        <div class="comment">${item.COMMENT_TEXT}</div>
+                    </div>`;
+                });
+            })
+            .catch(e => {
+                document.getElementById('cont').innerText = "Lỗi kết nối Server!";
+            });
+    </script>
+</body>
+
+</html>
